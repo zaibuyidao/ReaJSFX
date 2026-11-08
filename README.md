@@ -12,9 +12,9 @@ Download a format package from [Releases](https://github.com/zaibuyidao/ReaJSFX/
 
 | Format | Install |
 |---|---|
-| VST2 | Copy `VST2/ReaJSFX.dll` into the DAW's VST2 directory. |
-| VST3 | Copy the entire `VST3/ReaJSFX.vst3` directory into `C:\Program Files\Common Files\VST3`. |
-| CLAP | Copy `CLAP/ReaJSFX.clap` into `C:\Program Files\Common Files\CLAP`. |
+| VST2 | Copy `VST2/reajsfx.dll` into the DAW's VST2 directory. |
+| VST3 | Copy the entire `VST3/reajsfx.vst3` directory into `C:\Program Files\Common Files\VST3`. |
+| CLAP | Copy `CLAP/reajsfx.clap` into `C:\Program Files\Common Files\CLAP`. |
 
 Rescan plugins. Plugin IDs are retained from the previous implementation, so remove duplicate installations when upgrading.
 

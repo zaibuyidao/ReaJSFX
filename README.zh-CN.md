@@ -12,9 +12,9 @@ VST2 基于 [Justin Frankel 的官方 JSFX 源码](https://github.com/justinfran
 
 | 格式 | 安装方式 |
 |---|---|
-| VST2 | 将 `VST2/ReaJSFX.dll` 复制到 DAW 的 VST2 插件目录。 |
-| VST3 | 将整个 `VST3/ReaJSFX.vst3` 目录复制到 `C:\Program Files\Common Files\VST3`。 |
-| CLAP | 将 `CLAP/ReaJSFX.clap` 复制到 `C:\Program Files\Common Files\CLAP`。 |
+| VST2 | 将 `VST2/reajsfx.dll` 复制到 DAW 的 VST2 插件目录。 |
+| VST3 | 将整个 `VST3/reajsfx.vst3` 目录复制到 `C:\Program Files\Common Files\VST3`。 |
+| CLAP | 将 `CLAP/reajsfx.clap` 复制到 `C:\Program Files\Common Files\CLAP`。 |
 
 重新扫描插件。插件 ID 沿用原实现，更新时请移除重复安装。
 

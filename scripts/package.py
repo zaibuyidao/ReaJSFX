@@ -16,7 +16,7 @@ a.output.mkdir(parents=True,exist_ok=True)
 def digest(path):return hashlib.sha256(path.read_bytes()).hexdigest()
 common=[x for x in a.stage.rglob('*') if x.is_file() and x.relative_to(a.stage).parts[0] not in ('VST2','VST3','CLAP')]
 artifacts={}
-for fmt,relative in [('VST2','VST2/ReaJSFX.dll'),('VST3','VST3/ReaJSFX.vst3/Contents/x86_64-win/ReaJSFX.vst3'),('CLAP','CLAP/ReaJSFX.clap')]:
+for fmt,relative in [('VST2','VST2/reajsfx.dll'),('VST3','VST3/reajsfx.vst3/Contents/x86_64-win/reajsfx.vst3'),('CLAP','CLAP/reajsfx.clap')]:
     binary=a.stage/relative
     if not binary.is_file():raise SystemExit('Missing staged plugin: '+str(binary))
     archive=a.output/f'ReaJSFX-{version}-{fmt.lower()}-win-x64.zip'

@@ -37,6 +37,8 @@ jobs:
         run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
       - name: Build all formats
         run: cmake --build build --config Release --parallel 4
+      - name: Test VST2 resource paths and audio
+        run: python scripts/test-vst2-paths.py build/bin/Release/reajsfx.dll
       - name: Stage installation
         run: cmake --install build --config Release --prefix stage
       - name: Package plugins and source

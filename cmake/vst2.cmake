@@ -20,6 +20,6 @@ target_compile_options(reajsfx_vst2 PRIVATE
   "$<$<COMPILE_LANGUAGE:C,CXX>:/utf-8;/wd4244;/wd4267;/wd4018;/wd4800;/wd4996>")
 target_include_directories(reajsfx_vst2 PRIVATE "${vst2_project}")
 target_link_libraries(reajsfx_vst2 PRIVATE comctl32 user32 gdi32 comdlg32 shell32 winmm ole32 msimg32 advapi32)
-set_target_properties(reajsfx_vst2 PROPERTIES PREFIX "" OUTPUT_NAME ReaJSFX SUFFIX .dll
+set_target_properties(reajsfx_vst2 PROPERTIES PREFIX "" OUTPUT_NAME reajsfx SUFFIX .dll
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin/$<CONFIG>"
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin/$<CONFIG>")

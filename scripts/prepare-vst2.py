@@ -60,6 +60,12 @@ for old,new in [('#define VENDOR "Cockos"','#define VENDOR "Cockos / zaibuyidao"
                 ('ReaJS by Cockos Incorporated - www.reaper.fm','ReaJSFX - Cockos / zaibuyidao')]:
     if old not in s:raise RuntimeError('Upstream branding anchor changed: '+old)
     s=s.replace(old,new)
+# The upstream Windows fallback constructs <DLL directory>/JS but never stores
+# it. The released ReaPlugs DLL did store it (see docs/COMPATIBILITY.md).
+fallback = '        lstrcatn(buf,WDL_DIRCHAR_STR "JS", sizeof(buf));'
+if s.count(fallback) != 1:
+    raise RuntimeError('Upstream Windows JS resource path anchor changed')
+s = s.replace(fallback, fallback + '\n        g_root_path.Set(buf);')
 frame.write_text(s,encoding='utf-8')
 rc=TREE/'jsfx/reajs-vst2/res.rc'
 s=rc.read_text(encoding='utf-8').replace('"afxres.h"','<winres.h>').replace('"ReaJS"','"ReaJSFX"')

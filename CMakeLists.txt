@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.27)
-project(ReaJSFX VERSION 0.1.0 LANGUAGES C CXX RC)
+project(ReaJSFX VERSION 0.1.1 LANGUAGES C CXX RC)
 if(NOT WIN32 OR NOT MSVC OR NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
   message(FATAL_ERROR "ReaJSFX requires Windows x64 and MSVC")
 endif()
@@ -25,7 +25,7 @@ target_compile_options(modern_reajs_impl PRIVATE /utf-8 /EHsc)
 target_link_libraries(modern_reajs_impl PUBLIC jsfx_runtime comdlg32)
 # Retain the existing protocol IDs across the display-name change.
 make_clapfirst_plugins(TARGET_NAME modern_reajs IMPL_TARGET modern_reajs_impl
-  OUTPUT_NAME "ReaJSFX" ENTRY_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/src/entry.cpp"
+  OUTPUT_NAME "reajsfx" ENTRY_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/src/entry.cpp"
   BUNDLE_IDENTIFIER "org.modernreajs.host" BUNDLE_VERSION "${ReaJSFX_VERSION}"
   PLUGIN_FORMATS CLAP VST3 COPY_AFTER_BUILD FALSE WINDOWS_FOLDER_VST3 FALSE)
 foreach(t modern_reajs_clap modern_reajs_vst3)
@@ -41,7 +41,7 @@ include(cmake/vst2.cmake)
 
 install(FILES "$<TARGET_FILE:reajsfx_vst2>" DESTINATION VST2)
 install(FILES "$<TARGET_FILE:modern_reajs_clap>" DESTINATION CLAP)
-install(FILES "$<TARGET_FILE:modern_reajs_vst3>" DESTINATION VST3/ReaJSFX.vst3/Contents/x86_64-win)
+install(FILES "$<TARGET_FILE:modern_reajs_vst3>" DESTINATION VST3/reajsfx.vst3/Contents/x86_64-win)
 install(FILES README.md README.zh-CN.md LICENSE THIRD_PARTY_NOTICES.txt DESTINATION .)
 install(DIRECTORY docs/ DESTINATION docs)
 install(FILES dependencies/vst2-vestige/COPYING DESTINATION licenses RENAME VeSTige-GPL-2.0.txt)

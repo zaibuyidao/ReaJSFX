@@ -41,6 +41,9 @@ struct Host {
   std::vector<double> audio;
   HWND window=nullptr,pathEdit=nullptr,status=nullptr; uint32_t width=900,height=650;
   HFONT toolbarFont=nullptr; LOGFONTW toolbarFontSpec{};
+  int (*themeColor)(int)=nullptr;
+  std::array<COLORREF,6> toolbarColors{};
+  static constexpr UINT_PTR themeTimer=0x524a;
   std::string pendingPath,lastError;
   std::array<std::atomic<double>,256> values{};
   std::array<std::atomic<bool>,256> dirty{};
@@ -204,6 +207,44 @@ struct Host {
     SetWindowTextW(status,wide(message).c_str());
     layout();
   }
+  // The native VST2 editor is a dialog which REAPER can theme. This custom
+  // VST3/CLAP container must explicitly use the host's overridden system colors.
+  // Resolve per instance, leaving other hosts and older REAPER versions native.
+  void refreshToolbarTheme(bool force=false){
+    if(!window||!themeColor)return;
+    const int indices[]={COLOR_BTNFACE,COLOR_BTNTEXT,COLOR_WINDOW,COLOR_WINDOWTEXT,
+      COLOR_GRAYTEXT,COLOR_BTNSHADOW};
+    auto next=toolbarColors;
+    for(size_t i=0;i<next.size();++i)next[i]=(COLORREF)themeColor(indices[i]);
+    if(!force&&next==toolbarColors)return;
+    toolbarColors=next;
+    InvalidateRect(window,nullptr,TRUE);
+    for(int id:{100,102,103})if(auto child=GetDlgItem(window,id))RedrawWindow(child,nullptr,nullptr,RDW_INVALIDATE|RDW_ERASE|RDW_FRAME);
+  }
+  LRESULT toolbarControlColor(HDC dc,HWND control){
+    const bool edit=control==pathEdit;
+    const COLORREF bg=toolbarColors[edit?2:0];
+    SetTextColor(dc,toolbarColors[IsWindowEnabled(control)?(edit?3:1):4]);
+    SetBkColor(dc,bg);SetDCBrushColor(dc,bg);
+    return (LRESULT)GetStockObject(DC_BRUSH);
+  }
+  void drawLoadButton(const DRAWITEMSTRUCT& item){
+    const bool pressed=(item.itemState&ODS_SELECTED)!=0;
+    RECT bounds=item.rcItem;
+    SetDCBrushColor(item.hDC,toolbarColors[0]);
+    FillRect(item.hDC,&bounds,(HBRUSH)GetStockObject(DC_BRUSH));
+    SetDCBrushColor(item.hDC,toolbarColors[5]);
+    FrameRect(item.hDC,&bounds,(HBRUSH)GetStockObject(DC_BRUSH));
+    if(pressed)OffsetRect(&bounds,1,1);
+    SetBkMode(item.hDC,TRANSPARENT);
+    SetTextColor(item.hDC,toolbarColors[(item.itemState&ODS_DISABLED)?4:1]);
+    auto previous=SelectObject(item.hDC,toolbarFont?toolbarFont:GetStockObject(DEFAULT_GUI_FONT));
+    DrawTextW(item.hDC,L"Load",-1,&bounds,DT_CENTER|DT_VCENTER|DT_SINGLELINE);
+    SelectObject(item.hDC,previous);
+    if((item.itemState&ODS_FOCUS)&&!(item.itemState&ODS_NOFOCUSRECT)){
+      bounds=item.rcItem;InflateRect(&bounds,-3,-3);DrawFocusRect(item.hDC,&bounds);
+    }
+  }
   void layout(){
     if(!window)return;
     // Use the upstream dialog's exact font when loaded. Before loading, use
@@ -256,25 +297,38 @@ struct Host {
     auto s=(Host*)GetWindowLongPtrW(w,GWLP_USERDATA);
     if(msg==WM_NCCREATE){s=(Host*)((CREATESTRUCTW*)lp)->lpCreateParams;SetWindowLongPtrW(w,GWLP_USERDATA,(LONG_PTR)s);}
     if(!s)return DefWindowProcW(w,msg,wp,lp);
+    if(msg==WM_TIMER&&wp==themeTimer){s->refreshToolbarTheme();return 0;}
+    if(msg==WM_THEMECHANGED||msg==WM_SYSCOLORCHANGE||msg==WM_SETTINGCHANGE)s->refreshToolbarTheme(true);
+    if(s->themeColor){
+      if(msg==WM_ERASEBKGND){RECT r;GetClientRect(w,&r);SetDCBrushColor((HDC)wp,s->toolbarColors[0]);FillRect((HDC)wp,&r,(HBRUSH)GetStockObject(DC_BRUSH));return 1;}
+      if(msg==WM_CTLCOLOREDIT||msg==WM_CTLCOLORSTATIC)return s->toolbarControlColor((HDC)wp,(HWND)lp);
+      if(msg==WM_DRAWITEM&&wp==102&&lp){s->drawLoadButton(*(const DRAWITEMSTRUCT*)lp);return TRUE;}
+    }
     if(msg==WM_SIZE){s->width=LOWORD(lp);s->height=HIWORD(lp);s->layout();return 0;}
     if(msg==WM_COMMAND&&LOWORD(wp)==102&&HIWORD(wp)==BN_CLICKED){s->library();return 0;}
     return DefWindowProcW(w,msg,wp,lp);
   }
   bool createUI(){
     if(window)return true;
+    connectReaper();
+    themeColor=reinterpret_cast<decltype(themeColor)>(getReaperApi(this,"GSC_mainwnd"));
     WNDCLASSW wc{};wc.hInstance=moduleHandle;wc.lpfnWndProc=wndproc;wc.lpszClassName=L"ReaJSFXHost";
     wc.hCursor=LoadCursor(nullptr,IDC_ARROW);wc.hbrBackground=(HBRUSH)(COLOR_BTNFACE+1);RegisterClassW(&wc);
     window=CreateWindowExW(WS_EX_CONTROLPARENT,wc.lpszClassName,L"ReaJSFX",WS_POPUP|WS_CLIPCHILDREN,0,0,width,height,nullptr,nullptr,moduleHandle,this);
     if(!window)return false;
+    refreshToolbarTheme(true);
     pathEdit=CreateWindowExW(WS_EX_CLIENTEDGE,L"EDIT",wide(rt.path()).c_str(),WS_CHILD|WS_VISIBLE|ES_AUTOHSCROLL|ES_READONLY,0,0,100,24,window,(HMENU)100,moduleHandle,nullptr);
-    CreateWindowW(L"BUTTON",L"Load",WS_CHILD|WS_VISIBLE|WS_TABSTOP,0,0,60,24,window,(HMENU)102,moduleHandle,nullptr);
+    CreateWindowW(L"BUTTON",L"Load",WS_CHILD|WS_VISIBLE|WS_TABSTOP|(themeColor?BS_OWNERDRAW:0),0,0,60,24,window,(HMENU)102,moduleHandle,nullptr);
     status=CreateWindowW(L"STATIC",wide(lastError).c_str(),WS_CHILD,0,0,100,34,window,(HMENU)103,moduleHandle,nullptr);
     for(int id:{100,102,103})SendMessageW(GetDlgItem(window,id),WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),FALSE);
     rt.attach(window);layout();
     if(moduleConfig.lockEffect)EnableWindow(GetDlgItem(window,102),FALSE);
+    // Hosts need not broadcast Windows theme messages to plug-in children.
+    // Poll only while the editor exists and repaint only on a palette change.
+    if(themeColor)SetTimer(window,themeTimer,250,nullptr);
     return true;
   }
-  void destroyUI(){rt.detach();if(window)DestroyWindow(window);window=pathEdit=status=nullptr;if(toolbarFont)DeleteObject(toolbarFont);toolbarFont=nullptr;}
+  void destroyUI(){rt.detach();if(window){KillTimer(window,themeTimer);DestroyWindow(window);}window=pathEdit=status=nullptr;if(toolbarFont)DeleteObject(toolbarFont);toolbarFont=nullptr;themeColor=nullptr;}
 };
 
 const clap_plugin_params_t params={
