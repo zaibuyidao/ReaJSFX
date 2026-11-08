@@ -13,13 +13,19 @@
 
 VST2 保留上游运行时行为及限制，包括初始化和 `midisyx` 返回值问题。VST3 和 CLAP 应用对应修正。已弃用的经典链式 API 不重新实现。
 
-0.1.1 修复了锁定上游源码中 Windows VST2 的路径回退遗漏：拼出 `<DLL 所在目录>\JS` 后，将它保存为 `g_root_path`。`Effects` 和 `Data` 位于此根目录之下。保留旧版查找顺序：首先读取 HKLM `Software\REAPER` 默认值；如果 shell AppData 下存在 `REAPER\reaper-install-rev.txt`，改用该 AppData REAPER 目录；未找到 REAPER 时回退到 DLL 相邻的 `JS`。DLL 同名 INI 的 `[ReaJS] rootpath` 非空时覆盖自动查找，支持绝对/UNC、当前盘根相对和 DLL 相对路径。DLL 改名后需使用对应名称的 INI。
+## 资源路径
 
-已用 MSVC dumpbin 静态反汇编核对本机旧版 `reajs.dll.old`，SHA-256 为 `600223acd0337c494a0bc2fb2a399f5ba477c6c0886e9c1e2c1f7475810fcf72`。地址 `0x18009B637` 引用 REAPER 注册表路径，`0x18009B88C` 拼入 `JS`，`0x18009B8C0`–`0x18009B8CC` 将结果写入与注册表分支相同的根目录字符串；`0x18009BB98` 开始读取 INI 覆盖。这是路径相关的静态核对，不代表对旧 DLL 的全部行为完成逆向验证。
+`rootpath` 指定资源根目录。脚本位于 `Effects`，关联资源位于 `Data`。非空的 `[ReaJS] rootpath` 覆盖自动查找，支持绝对路径、UNC 路径、盘符根目录相对路径及普通相对路径。
 
-VST3/CLAP 的 Load 行在宿主提供接口时采用 REAPER 的 `GSC_mainwnd` 颜色，并在编辑器打开期间随配色变化刷新。其他宿主保留 Windows 控件；VST2 原有主题处理不变。
+VST2 读取 DLL 同名 INI，相对路径以 DLL 所在目录为基准。未设置 `rootpath` 时，使用 HKLM `Software\REAPER` 的默认值。如果该值非空，且 shell AppData 目录下存在 `REAPER\reaper-install-rev.txt`，则改用该 AppData 下的 `REAPER` 目录。没有配置 REAPER 路径时，回退到 `<DLL 所在目录>\JS`。
 
-实际 DLL 音频测试确认：旧版的相邻 `JS` 回退正常，未修新版失败；0.1.1 的默认、相对、带 `.\` 的相对、绝对及 DLL 改名 INI 共五项均通过，同时验证 `Data` 文件读取。旧版 INI 建议写 `rootpath=.\custom-content`：旧 DLL 在裸相对写法 `rootpath=custom-content` 的测试中失败，而 0.1.1 两种写法都通过。
+VST3/CLAP 先在模块目录及其祖先目录中查找 `Effects`，然后依次检查 REAPER 注册表路径（HKCU 优先于 HKLM，各自先查 64 位视图再查 32 位视图）和 `%APPDATA%\REAPER`。均不存在 `Effects` 时，回退到 `<模块目录>\JS`。配置优先读取模块同名 INI，其次读取 `ReaJSFX.ini`。VST3 在模块旁没有 INI 时也会检查外层 bundle 旁的配置。相对 `rootpath` 以选中的 INI 所在目录为基准。
+
+## 宿主配色
+
+VST3/CLAP 的 Load 行在宿主提供 `GSC_mainwnd` 时使用 REAPER 配色。编辑器打开期间响应 Windows 主题消息，并每 250 ms 检查配色变化。没有该接口时使用 Windows 控件。VST2 使用上游编辑器的主题处理。
+
+## 运行时限制
 
 REAPER 工程服务依赖 REAPER，无法在其他 DAW 中提供。标准 VST3 不能表达所有系统实时 MIDI 事件。未实现原生 MIDI 2.0/MPE 扩展。每块 MIDI 保护上限为 1,048,576 个事件和 64 MiB，超限或宿主拒收会报告错误。
 

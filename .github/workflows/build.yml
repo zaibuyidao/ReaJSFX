@@ -17,6 +17,8 @@ jobs:
     name: Windows x64 · VST2 / VST3 / CLAP
     runs-on: windows-2022
     timeout-minutes: 35
+    outputs:
+      release_tag: ${{ steps.version.outputs.release_tag }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -24,15 +26,20 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - name: Validate release version
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Read and validate release version
+        id: version
         shell: pwsh
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
+          BUILD_REF: ${{ github.ref }}
+          BUILD_REF_NAME: ${{ github.ref_name }}
         run: |
           $text = Get-Content CMakeLists.txt -Raw
           $version = [regex]::Match($text, 'project\(ReaJSFX VERSION ([0-9.]+)').Groups[1].Value
-          if ($env:RELEASE_TAG -ne "v$version") { throw 'Tag must match the CMake project version' }
+          if (!$version) { throw 'Missing CMake project version' }
+          if ($env:BUILD_REF.StartsWith('refs/tags/v') -and $env:BUILD_REF_NAME -ne "v$version") {
+            throw 'Tag must match the CMake project version'
+          }
+          "release_tag=v$version" >> $env:GITHUB_OUTPUT
       - name: Configure
         run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
       - name: Build all formats
@@ -56,13 +63,16 @@ jobs:
   release:
     name: Publish GitHub Release
     needs: build
-    if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/v')
+    if: >-
+      github.event_name != 'pull_request' &&
+      (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) ||
+       startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: write
     concurrency:
-      group: release-${{ github.ref }}
+      group: release-${{ needs.build.outputs.release_tag }}
       cancel-in-progress: false
     steps:
       - uses: actions/download-artifact@v8
@@ -73,10 +83,20 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ needs.build.outputs.release_tag }}
+          BUILD_SHA: ${{ github.sha }}
         shell: bash
         run: |
+          set -euo pipefail
+          # Never attach a different commit's binaries to an existing version tag.
+          if gh api "repos/$GH_REPO/git/ref/tags/$RELEASE_TAG" >/dev/null 2>&1; then
+            tag_sha=$(gh api "repos/$GH_REPO/commits/$RELEASE_TAG" --jq '.sha')
+            if [ "$tag_sha" != "$BUILD_SHA" ]; then
+              echo "::error::$RELEASE_TAG already points to another commit. Bump the CMake version before publishing a new build."
+              exit 1
+            fi
+          fi
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release create "$RELEASE_TAG" --verify-tag --title "ReaJSFX $RELEASE_TAG" --generate-notes
+            gh release create "$RELEASE_TAG" --target "$BUILD_SHA" --title "ReaJSFX $RELEASE_TAG" --generate-notes
           fi
           gh release upload "$RELEASE_TAG" release/* --clobber

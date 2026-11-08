@@ -1,4 +1,4 @@
-"""Prepare official VST2 sources with ABI declarations and display branding."""
+"""Prepare VST2 sources with ABI, resource-path and branding adaptations."""
 from pathlib import Path
 import argparse, shutil
 
@@ -60,8 +60,7 @@ for old,new in [('#define VENDOR "Cockos"','#define VENDOR "Cockos / zaibuyidao"
                 ('ReaJS by Cockos Incorporated - www.reaper.fm','ReaJSFX - Cockos / zaibuyidao')]:
     if old not in s:raise RuntimeError('Upstream branding anchor changed: '+old)
     s=s.replace(old,new)
-# The upstream Windows fallback constructs <DLL directory>/JS but never stores
-# it. The released ReaPlugs DLL did store it (see docs/COMPATIBILITY.md).
+# Persist the Windows fallback path constructed by upstream.
 fallback = '        lstrcatn(buf,WDL_DIRCHAR_STR "JS", sizeof(buf));'
 if s.count(fallback) != 1:
     raise RuntimeError('Upstream Windows JS resource path anchor changed')

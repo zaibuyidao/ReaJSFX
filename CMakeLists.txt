@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.27)
-project(ReaJSFX VERSION 0.1.1 LANGUAGES C CXX RC)
+project(ReaJSFX VERSION 0.1.2 LANGUAGES C CXX RC)
 if(NOT WIN32 OR NOT MSVC OR NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
   message(FATAL_ERROR "ReaJSFX requires Windows x64 and MSVC")
 endif()

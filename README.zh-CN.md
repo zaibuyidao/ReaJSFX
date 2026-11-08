@@ -4,7 +4,7 @@
 
 独立 ReaJS 插件已约十年未更新，而 JSFX 仍在持续发展。ReaJSFX 是基于官方开源代码的一次更新尝试，延续 ReaJS 加载和运行脚本的使用方式，并补充较新 JSFX 与现代插件格式的支持。当前提供 Windows x64 的 **VST2、VST3 和 CLAP** 版本。
 
-VST2 基于 [Justin Frankel 的官方 JSFX 源码](https://github.com/justinfrankel/jsfx)构建，仅应用构建适配和显示名称修改，不是 Cockos 发布的二进制。VST3 和 CLAP 复用同一上游引擎，并包含本项目的格式适配与运行时修正。
+VST2 基于 [Justin Frankel 的官方 JSFX 源码](https://github.com/justinfrankel/jsfx)构建，包含构建适配、显示名称修改及 Windows 资源路径修正，不是 Cockos 发布的二进制。VST3 和 CLAP 复用同一上游引擎，并包含本项目的格式适配与运行时修正。
 
 ## 安装
 
@@ -22,7 +22,7 @@ VST2 基于 [Justin Frankel 的官方 JSFX 源码](https://github.com/justinfran
 
 将脚本及导入文件放入 `Effects`，相关资源放入同级 `Data` 目录。点击 **Load** 选择脚本，点击 **Edit** 打开上游编辑器。声明了配置项的脚本会显示 **+** 按钮。
 
-需要指定 `rootpath` 或实例变体时，将 [ReaJSFX.ini.example](docs/ReaJSFX.ini.example) 复制到插件旁并命名为 `ReaJSFX.ini`。VST3 也支持将配置文件放在外层 bundle 旁。配置节名称保留为 `[ReaJS]`。
+需要指定 `rootpath` 或实例变体时，将 [ReaJSFX.ini.example](docs/ReaJSFX.ini.example) 复制到插件旁并命名为 `reajsfx.ini`。VST3 也支持将配置文件放在外层 bundle 旁。在 `[ReaJS]` 节设置 `rootpath=JS`，可使用相对于 INI 所在目录的 `JS/Effects` 和 `JS/Data`。自动查找及插件改名规则见[资源路径](docs/COMPATIBILITY.zh-CN.md#资源路径)。
 
 保存 DAW 工程即可保存插件状态。脚本和样本保持外置。VST3 和 CLAP 不导入 VST2 状态。具体范围见[格式差异](docs/COMPATIBILITY.zh-CN.md)。
 
@@ -36,7 +36,7 @@ VST2 基于 [Justin Frankel 的官方 JSFX 源码](https://github.com/justinfran
 
 命令构建三种格式，并将发布包写入 `release/`。依赖提交锁定在 [dependencies.json](dependencies.json)，配置时下载到被 Git 忽略的 `upstream/`。构建不会修改系统插件目录。
 
-GitHub Actions 在推送、Pull Request 和手动触发时执行构建。推送与 CMake 版本一致的 `vX.Y.Z` 标签，会自动发布三个插件包、包含依赖的完整源码包、构建清单及 SHA-256 校验文件。详见[构建说明](docs/BUILD.zh-CN.md)。
+GitHub Actions 在推送、Pull Request 和手动触发时执行构建。默认分支或匹配的 `vX.Y.Z` 标签构建成功后发布 GitHub Release。新的发布提交需要使用尚未发布的 CMake 版本。详见[构建与发布规则](docs/BUILD.zh-CN.md#github-actions)。
 
 ## 许可证
 

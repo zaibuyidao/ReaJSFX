@@ -24,8 +24,8 @@ The Release source ZIP includes populated dependencies and `.reajsfx-revision` m
 
 ## GitHub Actions
 
-`.github/workflows/build.yml` uses `windows-2022` to configure, build and stage all formats. Before staging, it loads temporary copies of the actual VST2 DLL and checks audio output from scripts and data in the default `JS` directory, relative and absolute `rootpath` directories, and a renamed DLL's matching INI. Registry reads are redirected within each test process without modifying registry keys or values. Every successful build uploads the `ReaJSFX-windows-x64` artifact. These checks do not replace host UI or VST3/CLAP runtime testing.
+`.github/workflows/build.yml` builds all formats on `windows-2022`, runs the VST2 resource-path tests, and uploads `ReaJSFX-windows-x64`. The tests cover default, relative and absolute resource paths and renamed-DLL INIs, including `Effects` and `Data` reads.
 
-To release, update `project(ReaJSFX VERSION ...)` and push the corresponding `vX.Y.Z` tag. A tag mismatch fails before configuration. The release job runs only for version tags after a successful build, with `contents: write` scoped to that job. Manual execution against a version tag can retry publication.
+Successful default-branch (`main`) and version-tag builds publish GitHub Releases. The tag `vX.Y.Z` comes from the CMake project version. A missing tag is created at the built commit. Tag pushes must match the project version. Manual runs on the default branch or a version tag follow the same rules. Other branches and pull requests only produce build artifacts.
 
-Assets comprise three format ZIPs, a complete source ZIP, a manifest containing the build revision and dependency commits, and SHA-256 checksums. Re-running the same tag replaces its assets. Branch builds and pull requests do not publish releases.
+Releases contain three plugin ZIPs, dependency-complete source, a revision/dependency manifest and SHA-256 checksums. Re-running the same commit and version replaces its assets. A tag pointing to another commit blocks publication and requires a version increment. Existing tags are never moved. Only the release job has `contents: write` permission.

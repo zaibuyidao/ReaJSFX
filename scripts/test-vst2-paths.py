@@ -1,9 +1,8 @@
-"""Exercise real Windows x64 VST2 DLL resource lookup and audio processing.
+"""Test Windows x64 VST2 resource lookup through audio output.
 
-Each case runs in a fresh process against a temporary DLL copy. Registry reads
-are redirected, for this process only, to an existing read-only key without a
-Software\\REAPER child. No registry key/value is created or modified.
-Usage: python scripts/test-vst2-paths.py path/to/reajs.dll [other.dll ...]
+Each case loads a temporary DLL copy in a separate process with process-local,
+read-only registry redirection.
+Usage: python scripts/test-vst2-paths.py path/to/reajsfx.dll [other.dll ...]
 """
 import argparse
 import ctypes as C
@@ -18,7 +17,6 @@ import tempfile
 
 def probe(dll):
     import winreg
-    # RegOverridePredefKey also affects the DLL's legacy RegOpenKey calls.
     registry = C.WinDLL("advapi32", use_last_error=True)
     override = registry.RegOverridePredefKey
     override.argtypes = [C.c_void_p, C.c_void_p]

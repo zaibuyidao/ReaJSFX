@@ -1,6 +1,8 @@
-; Copy as ReaJSFX.ini beside the plugin or the outer VST3 bundle.
+; Copy as reajsfx.ini beside the plugin or the outer VST3 bundle.
+; VST2 variants require an INI matching the DLL basename.
 [ReaJS]
-; Directory containing Effects and Data.
+; Directory containing Effects and Data. Relative to this INI.
+; rootpath=JS
 ; rootpath=C:\REAPER
 ; defaulteffect=analysis/loudness_meter
 ; Prefix defaulteffect with ! to lock script selection.

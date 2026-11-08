@@ -4,7 +4,7 @@
 
 The standalone ReaJS plugin has gone roughly a decade without an update, while JSFX has continued to evolve. ReaJSFX is an update effort based on the official open-source code, preserving ReaJS's script-based workflow while extending support for current JSFX and modern plugin formats. It provides Windows x64 builds in **VST2, VST3 and CLAP** formats.
 
-VST2 builds the official [Justin Frankel JSFX](https://github.com/justinfrankel/jsfx) host with build adaptations and display branding. It is not a Cockos-issued binary. VST3 and CLAP use the same upstream engine with this project's format adapters and runtime corrections.
+VST2 builds the official [Justin Frankel JSFX](https://github.com/justinfrankel/jsfx) host with build adaptations, display branding and a Windows resource-path correction. It is not a Cockos-issued binary. VST3 and CLAP use the same upstream engine with this project's format adapters and runtime corrections.
 
 ## Install
 
@@ -22,7 +22,7 @@ Rescan plugins. Plugin IDs are retained from the previous implementation, so rem
 
 Place scripts and imports under `Effects`, with associated assets under the sibling `Data` directory. Click **Load** to select a script. **Edit** opens the upstream editor. The **+** button appears for scripts declaring configuration options.
 
-Copy [ReaJSFX.ini.example](docs/ReaJSFX.ini.example) beside the plugin as `ReaJSFX.ini` to specify `rootpath` or an instance variant. For VST3, the INI can also sit beside the outer bundle. The configuration section remains `[ReaJS]`.
+Copy [ReaJSFX.ini.example](docs/ReaJSFX.ini.example) beside the plugin as `reajsfx.ini` to specify `rootpath` or an instance variant. For VST3, the INI can also sit beside the outer bundle. Set `rootpath=JS` in `[ReaJS]` for a library in `JS/Effects` and `JS/Data` relative to the INI directory. See [resource lookup](docs/COMPATIBILITY.md#resource-lookup) for automatic discovery and renamed plugins.
 
 Save the DAW project to retain plugin state. Scripts and samples remain external. VST2 state is not imported by VST3 or CLAP. See [format differences](docs/COMPATIBILITY.md).
 
@@ -36,7 +36,7 @@ Requires Visual Studio 2022 C++ tools, a Windows SDK, CMake 3.27+, Git and Pytho
 
 This builds all three formats and writes packages to `release/`. Dependencies are pinned in [dependencies.json](dependencies.json) and fetched into the ignored `upstream/` directory. No system plugin directories are modified.
 
-GitHub Actions builds pushes, pull requests and manual runs. Pushing a `vX.Y.Z` tag matching CMake publishes three plugin packages, a dependency-complete source archive, a manifest and SHA-256 checksums. See [build details](docs/BUILD.md).
+GitHub Actions builds pushes, pull requests and manual runs. Successful builds on the default branch or a matching `vX.Y.Z` tag publish GitHub Releases. Each new release commit requires an unused CMake version. See [build and release rules](docs/BUILD.md#github-actions).
 
 ## License
 

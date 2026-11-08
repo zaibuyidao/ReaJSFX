@@ -207,9 +207,7 @@ struct Host {
     SetWindowTextW(status,wide(message).c_str());
     layout();
   }
-  // The native VST2 editor is a dialog which REAPER can theme. This custom
-  // VST3/CLAP container must explicitly use the host's overridden system colors.
-  // Resolve per instance, leaving other hosts and older REAPER versions native.
+  // Custom containers require explicit use of REAPER's overridden system colors.
   void refreshToolbarTheme(bool force=false){
     if(!window||!themeColor)return;
     const int indices[]={COLOR_BTNFACE,COLOR_BTNTEXT,COLOR_WINDOW,COLOR_WINDOWTEXT,
@@ -323,8 +321,7 @@ struct Host {
     for(int id:{100,102,103})SendMessageW(GetDlgItem(window,id),WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),FALSE);
     rt.attach(window);layout();
     if(moduleConfig.lockEffect)EnableWindow(GetDlgItem(window,102),FALSE);
-    // Hosts need not broadcast Windows theme messages to plug-in children.
-    // Poll only while the editor exists and repaint only on a palette change.
+    // Hosts may not forward theme messages to plugin windows.
     if(themeColor)SetTimer(window,themeTimer,250,nullptr);
     return true;
   }
