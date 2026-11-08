@@ -1,0 +1,8 @@
+/build*/
+/upstream/
+/stage/
+/release/
+__pycache__/
+*.pyc
+.vs/
+*.user

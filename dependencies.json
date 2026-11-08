@@ -1,0 +1,26 @@
+{
+  "jsfx": {
+    "repository": "https://github.com/justinfrankel/jsfx.git",
+    "commit": "b34c4eeac6a0992343b380fea64b41ed0a8b94a7"
+  },
+  "clap": {
+    "repository": "https://github.com/free-audio/clap.git",
+    "commit": "a47f6badb49d948fd009998f28309cdab78979c9"
+  },
+  "clap-wrapper": {
+    "repository": "https://github.com/free-audio/clap-wrapper.git",
+    "commit": "806bba0a5f792e3966b99c1561ab9952d3316d7c"
+  },
+  "vst3sdk": {
+    "repository": "https://github.com/steinbergmedia/vst3sdk.git",
+    "commit": "3cdf9ca5d1f5b1b21e0a86832aa4abe55607bd96"
+  },
+  "reaper-sdk": {
+    "repository": "https://github.com/justinfrankel/reaper-sdk.git",
+    "commit": "b2ca1ec92c9a7864fb72346037986a384971ed03"
+  },
+  "dr-libs": {
+    "repository": "https://github.com/mackron/dr_libs.git",
+    "commit": "35b5c392cc15456736c440a68dbe073178bbffe0"
+  }
+}

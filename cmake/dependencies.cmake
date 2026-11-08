@@ -1,0 +1,27 @@
+include(FetchContent)
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/dependencies.json" _lock)
+foreach(name jsfx clap clap-wrapper vst3sdk reaper-sdk dr-libs)
+  string(JSON url GET "${_lock}" "${name}" repository)
+  string(JSON revision GET "${_lock}" "${name}" commit)
+  string(REPLACE "-" "_" key "reajsfx_${name}")
+  string(TOUPPER "${key}" upper)
+  set(path "${CMAKE_CURRENT_SOURCE_DIR}/upstream/${name}")
+  # Release source archives include dependency trees and their pinned revisions.
+  if(EXISTS "${path}/.reajsfx-revision")
+    file(READ "${path}/.reajsfx-revision" existing)
+    string(STRIP "${existing}" existing)
+    if(existing STREQUAL revision)
+      set(FETCHCONTENT_SOURCE_DIR_${upper} "${path}")
+    endif()
+  endif()
+  set(submodules)
+  if(name STREQUAL "vst3sdk")
+    set(submodules base cmake pluginterfaces public.sdk vstgui4)
+  endif()
+  FetchContent_Declare(${key}
+    GIT_REPOSITORY "${url}" GIT_TAG "${revision}"
+    GIT_SUBMODULES ${submodules} GIT_SUBMODULES_RECURSE TRUE
+    SOURCE_DIR "${path}" SOURCE_SUBDIR __reajsfx_fetch_only__)
+  FetchContent_MakeAvailable(${key})
+  file(WRITE "${path}/.reajsfx-revision" "${revision}\n")
+endforeach()

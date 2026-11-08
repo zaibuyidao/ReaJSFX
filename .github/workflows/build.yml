@@ -1,0 +1,80 @@
+name: Build ReaJSFX
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Windows x64 · VST2 / VST3 / CLAP
+    runs-on: windows-2022
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Validate release version
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          $text = Get-Content CMakeLists.txt -Raw
+          $version = [regex]::Match($text, 'project\(ReaJSFX VERSION ([0-9.]+)').Groups[1].Value
+          if ($env:RELEASE_TAG -ne "v$version") { throw 'Tag must match the CMake project version' }
+      - name: Configure
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+      - name: Build all formats
+        run: cmake --build build --config Release --parallel 4
+      - name: Stage installation
+        run: cmake --install build --config Release --prefix stage
+      - name: Package plugins and source
+        env:
+          BUILD_REVISION: ${{ github.sha }}
+        run: python scripts/package.py --stage stage --output release --revision "$env:BUILD_REVISION"
+      - name: Upload release files
+        uses: actions/upload-artifact@v6
+        with:
+          name: ReaJSFX-windows-x64
+          path: release/
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    concurrency:
+      group: release-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: ReaJSFX-windows-x64
+          path: release
+      - name: Create release and upload files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --verify-tag --title "ReaJSFX $RELEASE_TAG" --generate-notes
+          fi
+          gh release upload "$RELEASE_TAG" release/* --clobber

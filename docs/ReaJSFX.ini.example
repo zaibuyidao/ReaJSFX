@@ -1,0 +1,16 @@
+; Copy as ReaJSFX.ini beside the plugin or the outer VST3 bundle.
+[ReaJS]
+; Directory containing Effects and Data.
+; rootpath=C:\REAPER
+; defaulteffect=analysis/loudness_meter
+; Prefix defaulteffect with ! to lock script selection.
+preventedit=0
+midiflags=3
+; Omit channel counts for automatic modern-format layouts.
+; inputs=2
+; outputs=2
+numparms=256
+vstcat=1
+; appendname=/Instrument
+; Use a stable nonzero vstid for a distinct variant identity.
+; vstid=1234567
